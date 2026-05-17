@@ -1,0 +1,49 @@
+  // Mobile menu
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+  mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileMenu.classList.remove('open')));
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+              setTimeout(() => entry.target.classList.add('visible'), i * 80);
+              observer.unobserve(entry.target);
+          }
+      });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Stats counter
+  const counters = document.querySelectorAll('.stat-num');
+  const statsObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+          if (entry.isIntersecting) {
+              const target = +entry.target.getAttribute('data-target');
+              let count = 0;
+              const step = Math.ceil(target / 40);
+              const timer = setInterval(() => {
+                  count = Math.min(count + step, target);
+                  entry.target.textContent = count + (target === 100 ? '%' : '+');
+                  if (count >= target) clearInterval(timer);
+              }, 40);
+              statsObserver.unobserve(entry.target);
+          }
+      });
+  }, { threshold: 0.5 });
+  counters.forEach(c => statsObserver.observe(c));
+
+  // Form submit
+  document.getElementById('contactForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('.btn-submit');
+      btn.textContent = 'Message Sent ✓';
+      btn.style.background = '#10b981';
+      setTimeout(() => {
+          btn.textContent = 'Send Message →';
+          btn.style.background = '';
+          e.target.reset();
+      }, 3000);
+  });
