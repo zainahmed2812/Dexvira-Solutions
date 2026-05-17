@@ -47,3 +47,45 @@
           e.target.reset();
       }, 3000);
   });
+  // Contact Form Submit
+document.getElementById('contactForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+  
+    const btn = e.target.querySelector('.btn-submit');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+  
+    const data = {
+      firstName: e.target.querySelector('input[placeholder="John"]').value,
+      lastName: e.target.querySelector('input[placeholder="Smith"]').value,
+      email: e.target.querySelector('input[type="email"]').value,
+      service: e.target.querySelector('select').value,
+      message: e.target.querySelector('textarea').value
+    };
+  
+    try {
+      const response = await fetch('http://localhost:3000/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+  
+      const result = await response.json();
+  
+      if (result.success) {
+        btn.textContent = 'Message Sent ✓';
+        btn.style.background = '#10b981';
+        e.target.reset();
+        setTimeout(() => {
+          btn.textContent = 'Send Message →';
+          btn.style.background = '';
+          btn.disabled = false;
+        }, 3000);
+      }
+  
+    } catch (error) {
+      btn.textContent = 'Something went wrong';
+      btn.style.background = '#ef4444';
+      btn.disabled = false;
+    }
+  });
