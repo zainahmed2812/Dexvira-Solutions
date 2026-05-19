@@ -28,45 +28,63 @@ Key info:
 - Contact: hello@dexvirasolutions.com
 - Website: dexvirasolutions.com
 
-If user asks to talk to a human, agent, or live support — respond that you will notify the team and ask for their name and email.
-
+If user shares their email address and has previously asked to talk to an agent or human — trigger the handoff immediately.
 Keep responses short, helpful and professional.`;
 
 const isHandoffRequest = (message) => {
   const keywords = [
     'talk to agent', 'human', 'live support', 'speak to someone',
-    'contact agent', 'real person', 'talk to person', 'agent please'
+    'contact agent', 'real person', 'talk to person', 'agent please',
+    'connect me to agent', 'i want to connect', 'talk to human'
   ];
   return keywords.some(k => message.toLowerCase().includes(k));
 };
+
+const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 
 router.post('/', async (req, res) => {
   try {
     const { message, history, userName, userEmail } = req.body;
 
-    if (isHandoffRequest(message)) {
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: process.env.EMAIL_USER,
-        subject: 'Live Agent Requested — Dexvira Chat',
-        html: `
-          <h2>A user wants to talk to a live agent</h2>
-          <p><b>Name:</b> ${userName || 'Not provided'}</p>
-          <p><b>Email:</b> ${userEmail || 'Not provided'}</p>
-          <p><b>Last message:</b> ${message}</p>
-          <h3>Chat History:</h3>
-          <pre>${JSON.stringify(history, null, 2)}</pre>
-        `
-      });
+    const detectedEmail = message.match(emailRegex);
+    const finalEmail = userEmail || (detectedEmail ? detectedEmail[0] : '');
+
+    if (isHandoffRequest(message) || detectedEmail) {
+      if (!finalEmail) {
+        return res.json({
+          success: true,
+          reply: "Please share your email address so our agent can reach you directly.",
+          handoff: false,
+          needsEmail: true
+        });
+      }
+
+      try {
+        await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: process.env.EMAIL_USER,
+          subject: 'Live Agent Requested — Dexvira Chat',
+          html: `
+            <h2>A user wants to talk to a live agent</h2>
+            <p><b>Name:</b> ${userName || 'Not provided'}</p>
+            <p><b>Email:</b> ${finalEmail}</p>
+            <p><b>Last message:</b> ${message}</p>
+            <h3>Chat History:</h3>
+            <pre>${JSON.stringify(history, null, 2)}</pre>
+          `
+        });
+        console.log('Email sent successfully to:', finalEmail);
+      } catch (emailError) {
+        console.error('Email error:', emailError.message);
+      }
 
       return res.json({
         success: true,
-        reply: "I've notified our team — a live agent will reach out to you shortly. Is there anything else I can help you with?",
+        reply: "Our team has been notified — a live agent will contact you at " + finalEmail + " shortly.",
         handoff: true
       });
     }
 
-    // Build messages array for Groq
     const messages = [
       { role: 'system', content: SYSTEM_PROMPT },
       ...(history || []).map(h => ({
