@@ -7,7 +7,7 @@
     <meta name="description" content="Dexvira Solutions — Affordable web development, app development, digital marketing and AI automation for UK & US businesses.">
    <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="css/components/chat.css">
 </head>
 <body>
 
@@ -315,7 +315,7 @@
                 </div>
                 <div class="contact-detail">
                     <div class="contact-icon">🌍</div>
-                    <span>Serving UK & US clients globally</span>
+                    <span>Serving clients globally</span>
                 </div>
                 <div class="contact-detail">
                     <div class="contact-icon">⏱️</div>
@@ -376,6 +376,27 @@
     </div>
 </footer>
 
+<!-- Chat Widget -->
+<div id="chat-widget">
+    <button id="chat-toggle">💬</button>
+    <div id="chat-box" class="hidden">
+        <div id="chat-header">
+            <span>Dexvira Assistant</span>
+            <span id="chat-status">● Online</span>
+            <button id="chat-close">✕</button>
+        </div>
+        <div id="chat-messages">
+            <div class="bot-msg">Hi! I am the Dexvira Assistant. How can I help you today?</div>
+        </div>
+        <div id="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type a message...">
+            <button id="chat-send">Send</button>
+        </div>
+    </div>
+</div>
+
 <script src="js/main.js"></script>
+<script src="js/components/chat.js"></script>
+
 </body>
 </html>
