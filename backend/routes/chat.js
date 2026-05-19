@@ -1,11 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { PrismaClient } = require('@prisma/client');
+const Groq = require('groq-sdk');
 const nodemailer = require('nodemailer');
 
-const prisma = new PrismaClient();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -63,29 +61,28 @@ router.post('/', async (req, res) => {
 
       return res.json({
         success: true,
-        reply: "I've notified our team — a live agent will reach out to you shortly on your email. Is there anything else I can help you with in the meantime?",
+        reply: "I've notified our team — a live agent will reach out to you shortly. Is there anything else I can help you with?",
         handoff: true
       });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    // Build messages array for Groq
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...(history || []).map(h => ({
+        role: h.role === 'model' ? 'assistant' : 'user',
+        content: h.parts[0].text
+      })),
+      { role: 'user', content: message }
+    ];
 
-    const chat = model.startChat({
-      history: [
-        {
-          role: 'user',
-          parts: [{ text: SYSTEM_PROMPT }]
-        },
-        {
-          role: 'model',
-          parts: [{ text: 'Understood. I am the Dexvira Solutions assistant. How can I help you today?' }]
-        },
-        ...(history || [])
-      ]
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages,
+      max_tokens: 500
     });
 
-    const result = await chat.sendMessage(message);
-    const reply = result.response.text();
+    const reply = completion.choices[0].message.content;
 
     res.json({ success: true, reply });
 
